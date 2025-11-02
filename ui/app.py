@@ -62,7 +62,7 @@ def talk(q, show_context):
         return "❓ 질문을 입력해주세요.", ""
     
     try:
-        r = requests.post(f"{API_URL}/chat", json={"query": q, "k": 10}, timeout=120)
+        r = requests.post(f"{API_URL}/chat", json={"query": q, "k": 10, "search_mode": "embedding"}, timeout=120)
         r.raise_for_status()
         j = r.json()
         
