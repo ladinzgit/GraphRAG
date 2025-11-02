@@ -1,0 +1,109 @@
+services:
+  neo4j:
+    image: neo4j:5.24-community
+    container_name: neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+      - NEO4J_dbms_memory_heap_initial__size=1G
+      - NEO4J_dbms_memory_heap_max__size=2G
+      - NEO4J_server_default__advertised__address=neo4j
+      - NEO4J_server_http_listen__address=0.0.0.0:7474
+      - NEO4J_server_bolt_listen__address=0.0.0.0:7687
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    volumes:
+      - ollama_models:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  api:
+    build: ./api
+    container_name: graphrag-api
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - OLLAMA_URL=http://ollama:11434
+      - LLM_MODEL=mistral
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  indexer:
+    build: ./indexer
+    container_name: graphrag-indexer
+    environment:
+      - DATA_DIR=/data
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+    volumes:
+      - ./data:/data
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    # 최초 그래프 구축/재빌드 시 수동 실행: `docker compose run --rm indexer`
+    entrypoint: ["python","build_graph.py"]
+
+  ui:
+    build: ./ui
+    container_name: graphrag-ui
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+    ports:
+      - "7860:7860"
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  ollama_models:
+  redis_data:
