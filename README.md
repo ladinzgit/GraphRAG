@@ -2,6 +2,10 @@
 
 ConceptNet 5 지식 그래프를 활용한 한국어 질의응답 시스템
 
+[![GitHub](https://img.shields.io/badge/GitHub-ladinzgit%2FGraphRAG-blue?logo=github)](https://github.com/ladinzgit/GraphRAG)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](docker-compose.yml)
+
 ## 📋 목차
 - [시스템 개요](#시스템-개요)
 - [아키텍처](#아키텍처)
@@ -323,7 +327,15 @@ Pull Request 환영합니다!
 
 ## 📧 문의
 
-문제가 있거나 제안사항이 있다면 이슈를 등록해주세요.
+문제가 있거나 제안사항이 있다면 [GitHub Issues](https://github.com/ladinzgit/GraphRAG/issues)를 등록해주세요.
+
+## 🔗 Links
+
+- **GitHub Repository**: https://github.com/ladinzgit/GraphRAG
+- **Issues**: https://github.com/ladinzgit/GraphRAG/issues
+- **ConceptNet**: https://conceptnet.io/
+- **Neo4j**: https://neo4j.com/
+- **Ollama**: https://ollama.ai/
 
 ---
 
